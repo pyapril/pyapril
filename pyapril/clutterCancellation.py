@@ -5,7 +5,7 @@ import scipy.signal as sig
 """
                              Python based Advanced Passive Radar Library (pyAPRiL)
 
-                                               Channel preparation
+                                           Channel Preparation Module
      Description:
      ------------
 
