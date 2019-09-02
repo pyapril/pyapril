@@ -217,7 +217,6 @@ def time_domain_filter_surveillance(ref_ch, surv_ch, method, **kwargs):
     # kwargs processing
     K = kwargs.get('K') # Time domain filter dimension
     D = kwargs.get('D') # Doppler domain filter dimension
-    
     #T = 1, D=0, mu=1, lambd=1, ui=1, Na=0, imp="fast", w_init=None
     # --init--
     w = None
@@ -245,7 +244,13 @@ def time_domain_filter_surveillance(ref_ch, surv_ch, method, **kwargs):
             return None
 
     elif method == "ECA":
-        pass
+        if not (K is None or D is None):            
+            subspace_list = CC.gen_subspace_indexes(K, D)
+            filtered_surv_ch = CC.ECAS(ref_ch, surv_ch, subspace_list, T=1, Na=0)
+        else:
+            print("ERROR: Insufficient filter parameters")
+            return None
+
     elif method == "ECA-S":
         pass
     elif method == "S ECA-S":

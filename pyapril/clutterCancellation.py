@@ -12,9 +12,11 @@ import scipy.signal as sig
         List of implemented algorithms:
 
             - Wiener filter with Sample Matrix Inversion - Wiener_SMI     
-            - Wiener filter with minimum redundance estiomation - Wiener_SSMI 
+            - Wiener filter with minimum redundance estiomation - Wiener_SSMI
+            - Extensive Cancellation Algorithm ECA
+            - Batched version of the Extensive Cancellation Algorithm - ECA-B (Testing is required)
             - Least Mean Squares method - LMS                                 (Only in later versions !)            
-            - Sliding window Extensive Cancellation Algorithm - ECA-S         (Only in later versions !)
+            - Sliding window Extensive Cancellation Algorithm - ECA-S         (Testing is required)
             - Least Mean Square algorithm - LMS                               (Only in later versions !)
             - Normalized Least Mean Square algorithm - NLMS                   (Only in later versions !)
             - Recursive Least Squares - RLS                                   (Only in later versions !)
@@ -30,12 +32,10 @@ import scipy.signal as sig
      ------------
 
         Project: pyAPRiL
-
         Author: Dávid Huber, Tamás Pető
-
         License: GNU General Public License v3 (GPLv3)
 
-        Changelog :
+        Version history :
             - Ver 0.0001     : Initial version (2017 04 27)
             - Ver 0.0002     : Calc correction (2017 04 30)
             - Ver 0.0003     : FFT based calc including pruned correlation func (2017 05 01)
@@ -301,6 +301,134 @@ def Wiener_SMI_MRE(ref_ch, surv_ch, K):
 
     # output convolution lasts 1.61 sec K = 2048
     return surv_ch - np.convolve(ref_ch, w, mode='full')[0:N], w  # subtract the zero doppler clutter
+
+def ECAS(ref_ch, surv_ch, subspace_list, T, Na):
+    """
+
+    Description:
+    ------------
+        Performs filtering on the surveillance channel in the time domain. The ECA-S algorithm is a modification
+        of the ECA-B alg. where the filtering and the coefficient estimation is made on different block sizes.
+        The window used for the coefficient estimation is the symmetrical extension of the window that is used for the
+        filtering. This extension can be controlled via the Na parameter. Na is the one sided window extension
+        measured in signal samples.
+    Parameters:
+    -----------
+        :param ref_ch        : Signal component to suppress (reference channel)
+        :param surv_ch       : Channel to filter (surveillance channel)
+        :param subspace_list : Contains the time delay and Doppler shift which 
+                               is used to span the signal subspace
+        :param T             : Number of batches
+        :param Na            : One sided window extension measured in samples
+
+        :type ref_ch        : N by 1 complex numpy array
+        :type surv_ch       : N by 1 complex numpy array
+        :type subspace_list : 2D python list
+        :type:T             : int
+        :type Na            : int
+
+    Return values:
+    --------------
+        :return filt_ch: Filtered surveillance channel
+        :return w: Time domain filter coefficient vector
+        
+        :rtype N by 1 complex numpy array
+        :rtype K by 1 complex numpy array
+
+        :return None: General failure
+    """
+    # TODO: If the batch size is not multiple of the CPI the signals should be extend with zeros
+    N = ref_ch.size
+    batch_size = N // T
+
+    # -- input check --
+    if N % T:
+        print("ERROR: Improper batch size, filtering is bypassed")
+        print("ERROR: No output is generated")
+        return None, None
+
+    for k in subspace_list:
+        if k[1] > batch_size:
+            print("ERROR: Time delay is greater than the size of the batch, "
+                  "this is not handled properly. Time delay is bypassed")
+            print("ERROR: No output is generated")
+            return None, None
+        if k[1] > (batch_size + Na):
+            print("ERROR: Time delay is greater than the size of the batch plus the sliding window, "
+                  "this is not handled properly. Time delay is bypassed")
+            print("ERROR: No output is generated")
+            return None, None
+    # -- calculation --
+    KD = len(subspace_list)  # Signal subspace dimension
+
+    extended_ref_ch = np.zeros(N + 2*Na, dtype=complex)
+    extended_ref_ch[Na:Na + N] = ref_ch[:]
+    extended_surv_ch = np.zeros(N + 2*Na, dtype=complex)
+    extended_surv_ch[Na:Na + N] = surv_ch[:]
+
+    filtered_surv_ch = np.zeros(N, dtype=complex)
+
+    for l in np.arange(0, N, batch_size):  # Runs on batches
+        surv_signal_batch = surv_ch[l: l + batch_size]  # Filtering will be performed on this block
+        surv_signal_batch_ta = extended_surv_ch[l:l + batch_size + 2 * Na]  # "w" will be estimated on this block
+        x = np.zeros((batch_size, KD), dtype=complex)  # Signal subspace for filtering
+        x_ta = np.zeros((batch_size + 2*Na, KD), dtype=complex)  # Signal subspace for the estimation of the "w"
+
+        # Generate matrices for filtering and estimation from the current batch
+        subspace_vector_index = -1  # Used to index the subspace matrix (X) inside the for loops
+        for k in subspace_list:  # Select current subspace vector parameter
+            print("Progress: %d %%" %(((subspace_vector_index + 2) / KD) * ((l + batch_size) / N) * 100))
+            subspace_vector_index += 1
+
+            doppler_shift_array_ta = np.exp(np.arange(l - Na, l + batch_size + Na, 1) * 1j * 2 * np.pi * k[0] / (2*N))
+            doppler_shift_array = np.exp(np.arange(l, l + batch_size, 1) * 1j * 2 * np.pi * k[0] / (2*N))
+            if not l:  # For the first batch zero values must be inserted (l=0)
+                x[:, subspace_vector_index] = shift(ref_ch[l:l + batch_size], k[1])
+                x_ta[:, subspace_vector_index] = shift(extended_ref_ch[l:l + batch_size + 2 * Na], k[1])
+            else:
+                x[:, subspace_vector_index] = ref_ch[l - k[1]:l + batch_size - k[1]]
+                x_ta[:, subspace_vector_index] = extended_ref_ch[l - k[1]:l + 2 * Na + batch_size - k[1]]
+
+            x[:, subspace_vector_index] *= doppler_shift_array  # Doppler shift
+            x_ta[:, subspace_vector_index] *= doppler_shift_array_ta  # Doppler shift
+
+        # Orthogonal subspace projection
+        x = np.matrix(x)  # N x KD matrix
+        x_ta = np.matrix(x_ta)  # N x KD matrix
+        surv_signal = np.matrix(surv_signal_batch).getT()  # column vector
+        surv_signal_ta = np.matrix(surv_signal_batch_ta).getT()  # column vector
+        corr_matrix = x_ta.getH() * x_ta  # KD x KD
+        corr_vector = x_ta.getH() * surv_signal_ta  # KD x 1
+        weight_vector = corr_matrix.getI() * corr_vector  # coefficient vector
+        filtered_surv_ch[l:l + batch_size] = np.array(surv_signal - x * weight_vector)[:, 0]
+
+    return filtered_surv_ch
+
+def gen_subspace_indexes(K, D):
+    """
+    Description:
+    -----------
+    Generate a signal subspace parameter list for the ECA algorithm variants.
+
+    Parameters:
+    -----------
+        :param K: Number of considered time delay
+        :param D: Maximum Doppler frequency value
+
+        :type: K: int
+        :type: D: int
+    Return values:
+    --------------
+        :return: Generated subspace list
+        :rtype: 2D python list
+    """
+    rd_index_list = []  # Used to store range-Doppler indexes on which the filtering have to performed
+    # Create initial filter list
+    for i in np.arange(-D, D + 1, 1):  # Doppler shifts
+        for j in np.arange(0, K):  # Runs on signal delays
+            rd_index_list.append([i , j])
+
+    return rd_index_list
 
 def temp_xcorr_vect_estimate(ref_signal, surv_signal, K, implementation="direct_for"):
     """
