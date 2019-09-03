@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from numpy import linalg as LA
-import scipy.signal as sig
 """
                              Python based Advanced Passive Radar Library (pyAPRiL)
 
@@ -36,21 +35,16 @@ import scipy.signal as sig
         License: GNU General Public License v3 (GPLv3)
 
         Version history :
-            - Ver 0.0001     : Initial version (2017 04 27)
-            - Ver 0.0002     : Calc correction (2017 04 30)
-            - Ver 0.0003     : FFT based calc including pruned correlation func (2017 05 01)
-            - Ver 0.0010     : Wiener filter with SMI technique (2017 05 16)
-            - Ver 0.0020     : Least Mean Square filter (2017 05 16)
-            - Ver 0.0030     : Extensive Cancellation Algorithm with sliding window (2017 05 23)
-            - Ver 0.0040     : Iterative algorithms, LMS, NLMS, BLMS, BNLMS (2017 06 01)
-            - Ver 0.0050     : Maximum SIR beamformer with DOA estimation (2017 08 05)
-            - Ver 0.0051     : Better comments (2018 10 24)   
+            - Ver 1.0.0      : Initial version (2017 04 27)
+            - Ver 1.1.1      : Calc correction (2017 04 30)
+            - Ver 1.2.0      : FFT based calc including pruned correlation func (2017 05 01)
+            - Ver 1.3.0      : Wiener filter with SMI technique (2017 05 16)
+            - Ver 1.4.0      : Least Mean Square filter (2017 05 16)
+            - Ver 1.5.0      : Extensive Cancellation Algorithm with sliding window (2017 05 23)
+            - Ver 1.6.0      : Iterative algorithms, LMS, NLMS, BLMS, BNLMS (2017 06 01)
+            - Ver 1.7.0      : Maximum SIR beamformer with DOA estimation (2017 08 05)
+            - Ver 1.7.1      : Better comments (2018 10 24)   
 
-        Version format: Ver X.ABCD
-                            A - Complete code reorganization
-                            B - Processing stage modification or implementation
-                            C - Algorithm modification or implementation
-                            D - Error correction, Status display modification
 """
 
 def Wiener_SMI(ref_ch, surv_ch, K, imp="direct_for"):
@@ -377,7 +371,7 @@ def ECAS(ref_ch, surv_ch, subspace_list, T, Na):
         # Generate matrices for filtering and estimation from the current batch
         subspace_vector_index = -1  # Used to index the subspace matrix (X) inside the for loops
         for k in subspace_list:  # Select current subspace vector parameter
-            print("Progress: %d %%" %(((subspace_vector_index + 2) / KD) * ((l + batch_size) / N) * 100))
+            #print("Progress: %d %%" %(((subspace_vector_index + 2) / KD) * ((l + batch_size) / N) * 100))
             subspace_vector_index += 1
 
             doppler_shift_array_ta = np.exp(np.arange(l - Na, l + batch_size + Na, 1) * 1j * 2 * np.pi * k[0] / (2*N))
