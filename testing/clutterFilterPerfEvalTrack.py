@@ -12,23 +12,32 @@ import metricExtract as me
 #  Clutter filter performance evaluation on full track from raw data
 #
 
-# Load target track file
-track = np.load("VEGAM20190729FOXC0S0FM_SurvP5_track.npy")[:,0:2].astype(dtype=int)
-
+"""
+# This script is used to convert the track data
+track = np.load("VEGAM20180313C1S0FM_track_tr0.npy")[:,0:2].astype(dtype=int)
 # Centralizing Doppler coordinates
 for p in range(track.shape[0]):
     if track[p, 1] > -1:    
-        track[p, 1] -= (525-1)//2
+        #track[p, 1] -= (525-1)//2
+        track[p, 1] -= (131-1)//2
+"""
+
+# Load target track file
+#track = np.load("VEGAM20190729FOXC0S0FM_SurvP5_track.npy")[:,0:2].astype(dtype=int)
+track = np.load("VEGAM20180313C1S0FM_track_tr0.npy")
 
 win=[5,5,3,3]
-win_pos=[50,200]
-win_pos[1] -= (525-1)//2
-filename_temp = "_raw_iq/VEGAM20190729FOXC0S0_"
+win_pos=[50,-45]
+#filename_temp = "_raw_iq/VEGAM20190729FOXC0S0_"
+filename_temp = "_raw_iq/VEGAM20180313HR2C1S0FM/VEGAM20180313HR2U0C1S0FM_"
 
+#surv_ch_ind, ref_ch_ind
 metric_array = me.eval_clutter_filter_on_track_raw(iq_fname_temp=filename_temp,
-                                                start_ind=750, 
-                                                stop_ind=776,
+                                                start_ind=77, 
+                                                stop_ind=220,
                                                 filter_method="SMI-MRE",
+                                                ref_ch_ind=0,
+                                                surv_ch_ind=1,
                                                 target_rds=track,
                                                 K=64,
                                                 win=win,

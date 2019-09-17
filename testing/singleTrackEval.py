@@ -11,16 +11,14 @@ import metricExtract as me
 
 
 # Load target track file
-track = np.load("VEGAM20190729FOXC0S0FM_SurvP5_track.npy")[:,0:2].astype(dtype=int)
-rdat = np.load("VEGAM20190729FOXC0S0FM_SurvP5_RDAT.npy")    
-# Centralizing Doppler coordinates
-for p in range(track.shape[0]):
-    if track[p, 1] > -1:    
-        track[p, 1] -= (525-1)//2
+#track = np.load("VEGAM20190729FOXC0S0FM_SurvP5_track.npy")[:,0:2].astype(dtype=int)
+#rdat = np.load("VEGAM20190729FOXC0S0FM_SurvP5_RDAT.npy")    
+
+track = np.load("VEGAM20180313C1S0FM_track_tr0.npy")
+rdat = np.load("VEGAM20180313C1S0FM_RDAT_tr0.npy")
 
 win=[5,5,3,3]
-win_pos=[100,200]
-win_pos[1] -= (525-1)//2
+win_pos=[100,-45]
 
 
 metric_array = me.eval_metrics_on_track(track, rdat[:,0,:,:], win=win, win_pos=win_pos)

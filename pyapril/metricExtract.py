@@ -570,8 +570,8 @@ def eval_clutter_filter_raw(ref_ch, surv_ch, filter_method, **kwargs):
         :key rd_windowing  : Windowing function used on the range-Doppler map
                              For detailed description check the documenation of the
                              detector module. 
-        :key rd_size       : Size of the calculated range-Doppler map, measured in
-                             cells.
+        :key rd_size       : Sizze of the calculated range-Doppler map, measured in
+                             cells. (Interpreted as one sided in the Doppler domain)
         :type rd_windowing : string
         :type rd_size      : Python list with 2 integer elements [int int]
         
@@ -741,7 +741,9 @@ def eval_metrics_on_track(target_rds, rd_matrices, **kwargs):
     
 
 def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind, 
-                                     stop_ind, filter_method, **kwargs):
+                                     stop_ind, filter_method, 
+                                     ref_ch_ind=0, surv_ch_ind=1,
+                                     **kwargs):
     """
     Description:
     ------------
@@ -773,6 +775,12 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
         iq_fname_temp parameter.
         
         The expected format of the raw iq data file is complex numpy array (.npy)
+        The loaded IQ sample array could contains data from multiple antenna channels.
+        These individual channels are assumed to be packed into the different rows of the
+        iq sample matrix. (The assumed format is M x N, where M is the number of channels
+        and N is the number of iq samples.)
+        The channels to be processed can be selected with the 'ref_ch_ind' and the
+        'surv_ch_ind' parameters.
     
     Parameters:
     -----------
@@ -784,11 +792,17 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
     :param filter_metod : Name of the used clutter filtering algorithm.eg: "Winer-SMI-MRE"
                           For the list of the available clutter filtering algorithms
                           please check the documenation of clutterCancellation module.
-    
+    :param ref_ch_ind   : row index of the reference channel in the loaded iq sample matrix
+                          (default value: 0)  
+    :param surv_ch_ind  : row index of the surveillance channel in the loaded iq sample matrix 
+                          (default value: 1)
+                          
     :type iq_fname_temp : string
     :type start_ind     : int
     :type stop_ind      : int
     :type filter_method : string
+    :type ref_ch_ind    : int
+    :type surv_ch_ind   : int
                       
     
      **kwargs
@@ -832,8 +846,8 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
         #Load
         # TODO: Handle channel select proplery
         iq = np.load(filename)
-        ref_ch = iq[3,:]
-        surv_ch = iq [6,:]
+        ref_ch = iq[ref_ch_ind,:]
+        surv_ch = iq [surv_ch_ind,:]
         
         if target_rds is not None:
             # Get real target coordinates
@@ -956,6 +970,113 @@ def scan_time_domain_dimension(statistic, dim_list, iq_fname_temp, start_ind,
     
     return scan_res
 
+def scan_ECA(statistic, time_range, doppler_range, iq_fname_temp, start_ind, stop_ind,
+             filter_method, **kwargs):
+    """
+    Description:
+    ------------
+      This function explores the performance improvement dependency of a 
+      clutter filter in the time domain dimension.
+      
+      To achieve this, the function automatically sweeps through the previously
+      set dimension region and evaluates the performance metrics for each dimension size.
+              
+    Implementation notes:
+    ---------------------
+        This function use the 'eval_clutter_filter_on_track_raw' to estimate the
+        performance of the currently set filter dimension parameter.
+    Parameters:
+    -----------
+    These input parameters are mandatory!
+    
+    :param statistic     : Type of the final metric statistic 'avg' / 'max' / 'median'
+    :param time_range    : Time domain scan will be performed on this region 
+                           Format:[start,stop,step] eg:[2,64,1]
+    :param doppler_range : Doppler domain scan will be performed on this region 
+                           Format:[start,stop,step] eg:[0,3,1]
+    :param iq_fname_temp : Template name of the processed iq files
+                           (This field is required by the "eval_clutter_filter_on_track_raw" 
+                            function, check its header for more details)
+    :param start_ind     : Index of the first processed file 
+                           (This field is required by the "eval_clutter_filter_on_track_raw" 
+                            function, check its header for more details)
+    :param stop_ind      : Index of the last processed file 
+                           (This field is required by the "eval_clutter_filter_on_track_raw" 
+                            function, check its header for more details)
+
+    :param filter_method : Name of the inspected clutter filter algorithm
+                           (This field is required by the "eval_clutter_filter_on_track_raw" 
+                           function, check its header for more details)
+    
+    
+    :type statistic      : string
+    :type time_range     : python list
+    :type doppler_range  : python list
+    :type iq_fname_temp  : string
+    :type start_ind      : int
+    :type stop_ind       : int
+    :type filter_method  : string
+    
+     **kwargs
+        The required metric extraction and filter parameters are received 
+        through the **kwargs interface. For more detailed description please 
+        check the function header or the documenation of the 
+        "eval_clutter_filter_on_track_raw" function.
+        
+    
+    Return values:
+    --------------
+    :return scan_res: Array of calculated performance metrics 
+    :rtype  scan_res: real valued numpy array
+    
+    None: Unknown statistic type is defined
+    """
+    time_domain_dims = np.arange(time_range[0],time_range[1], time_range[2])
+    doppler_domain_dims = np.arange(doppler_range[0],doppler_range[1], doppler_range[2])
+    
+    scan_res = None # Results array of the parameter scan
+    K_ind = -1
+    D_ind = -1
+    for D in doppler_domain_dims:
+        D_ind += 1
+        K_ind = -1
+        for K in time_domain_dims:
+            K_ind+=1
+            print("Current filter dimensions are K:{:d} D:{:d}".format(K,D))
+            metric_array = eval_clutter_filter_on_track_raw(iq_fname_temp=iq_fname_temp,
+                                                            start_ind=start_ind,
+                                                            stop_ind=stop_ind,
+                                                            filter_method=filter_method,
+                                                            K=K, 
+                                                            D=D,
+                                                            **kwargs)
+            
+            metric_statistic = []
+            
+            # Calculate statistics:
+            for m in np.arange(1, metric_array.shape[0], 1):
+                if statistic == 'avg':
+                    stat = np.average(10**(metric_array[m, :]/20))
+                elif statistic == 'max':
+                    stat = np.max(10**(metric_array[m, :]/20))
+                elif statistic == 'median':
+                    stat = np.median(10**(metric_array[m, :]/20))
+                else:
+                    print("ERROR: Unknown statistic requested:", statistic)
+                    return None
+                                    
+                metric_statistic.append(20*np.log10(stat))
+            
+            if scan_res is None:                
+                scan_res = np.zeros((time_domain_dims.shape[0], doppler_domain_dims.shape[0], len(metric_statistic)))
+            
+            scan_res[K_ind, D_ind,:] = np.array(metric_statistic)
+        
+    # Normalization
+    for i in range(len(metric_statistic)):
+        scan_res[:,:,i] -= np.max(scan_res[:,:,i])
+    
+    return scan_res
 
 
 
