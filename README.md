@@ -22,6 +22,10 @@ pip install pyapril
 ##### Version history
 * 1.0.0 Inital version
 * 1.1.0 Automatic detection added (CA-CFAR)
+* 1.2.0 Add temporal clutter filters (ECA, ECA-B, ECA-S)
+* 1.3.0 Clutter filter and detection performance evaluation
+* 1.4.0 Target DoA estimation
+* 1.5.0 Surveillance channel beamforming
 
 ##### Acknowledgements
 This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thank of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) who helped this project becoming mature with the development and testing of the Kerberos SDR.
@@ -29,7 +33,7 @@ This work was supported by the Microwave Remote Sensing Laboratory of BME ([Rada
 
 For further information on passive radars check: [tamaspeto.com](https://tamaspeto.com)
 *Tamás Pető*
-*2017-2019, Hungary*
+*2017-2020, Hungary*
 
 
 
