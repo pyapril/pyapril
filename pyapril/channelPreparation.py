@@ -268,7 +268,11 @@ def beamform_surveillance(ant_chs, alignment_vector, method, **kwargs):
 
             Available methods: (For detailed descriptions please check the pyargus library)
                 - Explicit: Coefficient vector is specified to the function.
-
+                
+                - Beam steering: Simply steers the direction of the main beam with
+                                 compensating the progressive phase shifts on the
+                                 antenna elements.
+                
                 - MSIR : Maximum signal to interference ratio. Fixed beamforming method. 
                          The direction of the main beam an the interferences must be 
                          specified. If the specified constraints are less than the 
@@ -400,8 +404,11 @@ def beamform_surveillance(ant_chs, alignment_vector, method, **kwargs):
                                            alignment_vector)
 
     elif method == 'DOA aided Max SIR':
-        w = CC.maxSIR_DOA(surv_chs=ant_chs, array_alignment=alignment_vector, 
-                          doa_method="MEM", target_DOA=direction)
+        print("ERROR: This method is currently not implemented")
+        print("No valid outputs are generated!")
+        return None, None
+        #w = CC.maxSIR_DOA(surv_chs=ant_chs, array_alignment=alignment_vector, 
+        #                  doa_method="MEM", target_DOA=direction)
 
     elif method == "MVDR":
         if Rnn is None:
@@ -425,6 +432,9 @@ def beamform_surveillance(ant_chs, alignment_vector, method, **kwargs):
 
         # Calculate optimal weight coefficient vector
         w = bf.peigen_bemform(R, aS, peigs)
+    
+    elif method == "Beam steering":
+        w = np.exp(alignment_vector * 1j * 2 * np.pi * np.cos(np.deg2rad(direction)))
 
     elif method == "Explicit":
         w = explicit_w
