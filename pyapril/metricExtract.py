@@ -1079,6 +1079,51 @@ def scan_ECA(statistic, time_range, doppler_range, iq_fname_temp, start_ind, sto
     return scan_res
 
 
-
-
-
+def time_domain_dim_stability(statistic, dim_list, iq_fname_temp, start_ind,
+                               stop_ind, filter_method, iqrec_win_size, **kwargs):
+    """
+    Description:
+    ------------
+        This function can be used to test the short-term stability of the "optimal"
+        time domain dimension of an investigated filter.
+        
+        The function goes through the designated iq records (from 'start_ind' to 'stop_ind'),
+        but in a give time only a limited number of iq records are processed. In the first step
+        the first 'iqrec_win_size' records are processed then in the next step the selected 
+        iq records are shifted with one position. 
+        In each evaluation the best filter dimension values is stored for all metrics. 
+        This way at the end of the processing, one can inspect the time dependency of the 
+        best filter dimension values.
+        
+    Implementation notes:
+    ---------------------
+    Parameters:
+    -----------
+        :param iqrec_win_size: Size of sliding window in which the iq records are
+                               processed
+            
+        :type  iqrec_win_size: int
+        This function wrappes the "scan_time_domain dimension" function. For 
+        the description of the rest of the input parameters plese check the 
+        header of that function!
+        
+        
+    Return values:
+    --------------
+    """
+    threshold=0.5
+    best_values_vs_t = []
+    for t_start in np.arange(start_ind, stop_ind-iqrec_win_size+1, 1):
+        print(t_start)
+        scan_res = scan_time_domain_dimension(statistic=statistic,
+                                                 dim_list=dim_list,                                      
+                                                 iq_fname_temp=iq_fname_temp,
+                                                 start_ind=t_start, 
+                                                 stop_ind=t_start+iqrec_win_size,
+                                                 filter_method=filter_method,
+                                                 **kwargs)
+        best_values_at_t = []
+        for i in np.arange(1, scan_res.shape[0],1):
+            best_values_at_t.append(np.where(scan_res[i,:]>-threshold)[0])
+        best_values_vs_t.append(best_values_at_t)
+    return best_values_vs_t
