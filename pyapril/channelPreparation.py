@@ -1,6 +1,12 @@
 # - coding: utf-8 -*-
 import numpy as np
 import clutterCancellation as CC
+try:
+    from pyargus import beamform as bf         
+    has_pyargus = True
+except ImportError as e:
+    print("WARNING: PyArgus is not installed, beamspace processing methods will not work")
+    has_pyargus = False
 """
 
                              Python based Advanced Passive Radar Library (pyAPRiL)
@@ -57,6 +63,7 @@ import clutterCancellation as CC
          - Ver 1.1.1     : Error corr. in ref and surv BF (2017 05 15)
          - Ver 1.2.0     : Implementation of time domain filters(2017 06 01)
          - Ver 1.3.0     : Implementation of pre-filtering techniques (2017 06)
+         - Ver 1.3.1     : Rebase beamformer wrapper function (2020 01 11)
 
 
 
@@ -250,3 +257,183 @@ def time_domain_filter_surveillance(ref_ch, surv_ch, method, **kwargs):
         return None
 
     return filtered_surv_ch
+
+def beamform_surveillance(ant_chs, alignment_vector, method, **kwargs):
+    """
+        Description:
+        -----------
+            The underlying function produces the signal of the surveillance channel 
+            from the antenna channels with the application of beamspace processing
+            techniques. Using the method string the applied technique can be selected.
+
+            Available methods: (For detailed descriptions please check the pyargus library)
+                - Explicit: Coefficient vector is specified to the function.
+
+                - MSIR : Maximum signal to interference ratio. Fixed beamforming method. 
+                         The direction of the main beam an the interferences must be 
+                         specified. If the specified constraints are less than the 
+                         antenna channels (degrees of freedom) Godara's method is used.
+                - DMSIR : DoA estimation aided Max SIR beamformer. This method tries to 
+                          automatically estimate the direction of illuminators and places
+                          nulls in the radiation pattern into these directions.
+                - MVDR : Minimum Variance Distortionless Response. Adaptive optimum 
+                         beamforming.
+                         
+                - Principal eigenvalue: Subspace based technique. To reject the 
+                         high power clutter components, it projects the surveillance
+                         channels to a subspace ortogonal to the principal eigenvalues.
+
+        Implementation notes:
+        ---------------------
+            This function can handle only 1D antenna array processing techniques.
+            Coefficent values are normalized prior to the beamspace processing.
+
+        Parameters:
+        -----------
+
+            :param ant_chs         : Multichannal complex signal array of the antenna channels
+            :param alignment_vector: Contains the positions of the antenna elements in the antenna system. 
+                                     The distances are interpreted in wavelength. e.g.: If d=lambda/2
+                                     [ 0.5 0.75 1.25 ]  --> x<---->x<-->x<---->x
+                                                              d     d/2   d
+            :param method          : Beamspace processing method. Valid values are the followings: 
+                                     "Explicit","MSIR","MVDR","Principal eigenvalue"
+            
+            :type ant_chs          : (N x M) complex numpy array, where M is the number of antenna channels
+                                     and N is the sample size
+            :type alignment_vector : 1 dimensional float array
+            :type method           : string
+                
+        **kwargs
+            The required space domain filter (beamformer) parameters for each filter are received 
+            through the **kwargs interface
+            
+            Valid keys are the followings:
+            :key explicit_w         : This coefficient vector is used when the explicit beamformer method is specified. -Explicit
+            :key MSIR_constraints   : First row contains the angles and the second row contains the constraint values. - MSIR
+            :key direction          : Main beam direction for the adaptive optimum beamformer. - MVDR
+                                      The dimension is deg, thus the valid range for float values is: 0 < .. < 180.
+            :key peigs              : Sets the subspace dimension of the principal signal components. - Principal eigenvalue
+            :key Rnn                : Spatial correclation matrix of the noise plus interferences - MVDR
+
+            :type explicit_w        : (M x 1) complex numpy array
+            :type MSIR_constraints  : (2 x [M-1]) numpy array
+            :type direction         : float
+            :type peigs             : int
+            :type Rnn               : (M x M) complex numpy array
+            
+
+        Return values:
+        --------------
+            :return reference_channel : (N by 1 complex numpy array) Reference channel obtained with beamspace processing.
+            :return coefficient_vector: (M by 1 complex numpy array) calculated and used coefficient vector
+            :return None, None : In case of calculation failure
+    """
+    # TODO: Implement and wrap reference orthogonal beamformer
+    if not has_pyargus:
+        print("ERROR: PyArgus is not installed!")
+        print("No valid outputs are generated!")
+        return None, None
+
+    # kwargs processing
+    explicit_w = kwargs.get('explicit_w') 
+    MSIR_constraints = kwargs.get('MSIR_constraints') 
+    direction = kwargs.get('direction') 
+    peigs = kwargs.get('peigs') 
+    Rnn = kwargs.get('Rnn') 
+    
+    # --- Input check ---
+    N = np.size(ant_chs, 0)
+    M = np.size(ant_chs, 1)
+    
+    if M > N:
+        print("WARNING: The number of antenna channels is greater than the number of samples in a channel. M > N")
+        print("You may flipped the input matrix")
+        print("No valid outputs are generated!")
+        print("N:", N)
+        print("M:", M)
+        return None, None
+    if M != np.size(alignment_vector):
+        print("ERROR: Mismatch in the input signal channel numbers and the antenna alignment vector size")
+        print("No valid outputs are generated!")
+        return None, None
+
+    if method == "Max SIR" and MSIR_constraints is None:
+        print("ERROR: Constraints are not specified for the Max SIR method")
+        print("No valid outputs are generated!")
+        return None, None
+
+    if method == "Explicit" and explicit_w is None:
+        print("ERROR: Coefficient vector is not specified, but the beamforming method is set to explicit")
+        print("No valid outputs are generated!")
+        return None, None
+
+    if method == "Explicit" and (np.size(explicit_w, 0) != M) is None:
+        print("ERROR: The number of antenna elements and the size of the given coefficient vector does not match")
+        print("No valid outputs are generated!")
+        return None, None
+
+    if method == "MVDR" and direction is None:
+        print("ERROR: Direction of the desired signal is not specified for the adaptive optimum beamformer (MVDR)")
+        print("No valid outputs are generated!")
+        return None, None
+
+    if method == "Principal eigenvalue" and peigs is None:
+        print("ERROR: Principal eigenvalue count is not specified for the subspace based beamformer")
+        print("No valid outputs are generated!")
+        return None, None
+
+    if direction > 180 or direction < 0:
+        print("ERROR: Direction of the desired signal is not in the range of 0..180 deg")
+        print("No valid outputs are generated!")
+        return None, None
+
+    # -- Coefficient calculation --
+    if method == 'Max SIR':
+        if np.size(MSIR_constraints, 0) == M:
+            w = bf.fixed_max_SIR_beamform(MSIR_constraints[0, :], 
+                                          MSIR_constraints[1, :], 
+                                          alignment_vector)
+        else:  # Apply Godara's method
+            w = bf.Goadar_max_sir_beamform(MSIR_constraints[0, :], 
+                                           MSIR_constraints[1, :], 
+                                           alignment_vector)
+
+    elif method == 'DOA aided Max SIR':
+        w = CC.maxSIR_DOA(surv_chs=ant_chs, array_alignment=alignment_vector, 
+                          doa_method="MEM", target_DOA=direction)
+
+    elif method == "MVDR":
+        if Rnn is None:
+            R = bf.estimate_corr_matrix(ant_chs, imp="fast")
+        else:
+            R = Rnn
+        # Create array response vector for the desired signal angle - ULA assumpation
+        aS = np.exp(alignment_vector * 1j * 2 * np.pi * np.cos(np.deg2rad(direction)))
+        aS = np.matrix(aS).reshape(M, 1)
+        
+        # Calculate optimal weight coefficient vector
+        w = bf.optimal_Wiener_beamform(R, aS)
+
+    elif method == "Principal eigenvalue":
+
+        R = bf.estimate_corr_matrix(ant_chs, imp="fast")
+
+        # Create array response vector for the desired signal angle
+        aS = np.exp(alignment_vector * 1j * 2 * np.pi * np.cos(np.deg2rad(direction)))
+        aS = np.matrix(aS).reshape(M, 1)
+
+        # Calculate optimal weight coefficient vector
+        w = bf.peigen_bemform(R, aS, peigs)
+
+    elif method == "Explicit":
+        w = explicit_w
+
+    norm_factor = np.sqrt(M) / np.sum(np.abs(w))
+    w = w * norm_factor
+
+    # -- Beamspace processing --
+    surv_ch = np.inner(np.transpose(np.conjugate(w)), ant_chs)[:]
+
+    return surv_ch, w
+
