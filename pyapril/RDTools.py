@@ -1,9 +1,66 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
+import matplotlib.patches as patches
 
+def export_rd_matrix_img(fname, rd_matrix, max_Doppler, 
+                         ref_point_range_index=0, 
+                         ref_point_Doppler_index=0, 
+                         box_color=None,
+                         box_size=0,
+                         dyn_range=None,
+                         dpi=200, 
+                         interpolation='sinc', 
+                         cmap='jet'):
+    """
+        Description:
+        ------------
+        This function exports the given range-Doppler matrix into an image file.
+        On the exported figure the X axis will represent the bistatic range while Y axis
+        will show the Doppler frequencies. The Doppler ticks are automatically generated,
+        but the caller should specifiy the maximum Doppler frequency in [Hz].
+        
+        If requested the function can draw an adition highligh box onto the exported
+        range-Doppler map image. This feature is usefull when the user want to highlight
+        a specific reflection. The color and the size of the highlight box is configurable
+        via the 'box_color' and the 'box_size' paramters. The position of the box could be
+        set by the By default, the highlight box is 
+        not drawn. 
+    
+        In case the dynamic range paramter is not specified the function will automatically
+        estimate the usefull dynamic range of the range-Doppler matrix.
+        
+        Parameters:
+        -----------
+        :param: fname                  : Filname into which the range-Doppler matrix will be exported
+        :param: rd_matrix              : range-Doppler matrix to be exported
+        :param: max_Doppler            : Maximum Doppler frequency in the range-Doppler matrix
+        :param: ref_point_range_index  : (default: 0)
+        :param: ref_point_Doppler_index: (default: 0)
+        :param: box_color              : (default: None - Highlight box will not be drawn)
+        :param: box_size               : (default: 0  - Highlight box will not be drawn)
+        :param: dyn_range              : (default: None - Dynamic range will be automatically calculated)
+        :param: dpi                    : (default: 200)
+        :param: interpolation          : (default: 'sinc')
+        :param: cmap                   : (default: 'jet')
 
-def export_rd_matrix_img(fname, rd_matrix, max_Doppler, dyn_range=None, dpi=200, interpolation='sinc', cmap='jet'):
+            
+        :type: fname                  : string
+        :type: rd_matrix              : R x D complex numpy array
+        :type: max_Doppler            : int
+        :type: ref_point_range_index  : int
+        :type: ref_point_Doppler_index: int
+        :type: box_color              : string
+        :type: box_size               : int
+        :type: dyn_range              : float
+        :type: dpi                    : int
+        :type: interpolation          : string - matplotlib compatible e.q.:'sinc' / 'none'
+        :type: cmap                   : string - matplotlib colormap e.g.:'jet' 
+
+            
+        Return values:
+        --------------
+        No return values
+    """
     
     """
     --------------------------------
@@ -71,12 +128,25 @@ def export_rd_matrix_img(fname, rd_matrix, max_Doppler, dyn_range=None, dpi=200,
     rd_fig.colorbar(rd_plot)
     
     
-    rd_axes.set_yticks(np.arange(0, np.size(rd_matrix, 0) + np.size(rd_matrix, 0) / 10, np.size(rd_matrix, 0) / 10))
-    rd_axes.set_yticklabels(np.arange(-max_Doppler, max_Doppler + 2 * max_Doppler / 10, 2 * max_Doppler / 10))
-    rd_axes.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    rd_axes.set_yticks(np.arange(0, np.size(rd_matrix, 0) + np.size(rd_matrix, 0) / 10, np.size(rd_matrix, 0) / 10))    
+    labels = []
+    labels_float = np.arange(-max_Doppler, max_Doppler + 2 * max_Doppler / 10, 2 * max_Doppler / 10).tolist()
+    for label_float in labels_float:
+        labels.append("{:.1f}".format(label_float))
+    rd_axes.set_yticklabels(labels)
     
+    
+    # Draw reference square if requested
+    if box_color is not None and box_size != 0:
+        rd_axes.add_patch(patches.Rectangle(
+            (ref_point_range_index - box_size, ref_point_Doppler_index - box_size),   # (x,y)
+            (box_size*2+1),          # width
+            (box_size*2+1),          # height
+            fill=False,
+            edgecolor = box_color,
+            linewidth = 1))
+
     plt.tight_layout()
     rd_fig.savefig(fname, dpi=dpi)
     plt.close()
-    
     
