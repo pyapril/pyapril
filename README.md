@@ -39,6 +39,7 @@ based passive radar systems.
 	    * P: Peak clutter reduction
 	    * D: Dynamic range compression
 	* **targetParameterCalculator**: Calculates the expected parameters of an observed target (bistatic range, Doppler, ...) from geodetic data.
+	* **RDTools**: range-Doppler matrix image export tool
 	* **docs**: Contains Ipython notebook files with demonstrations. (Currently not available)
 	* **testing**: Contains demonstration functions.
 
@@ -63,3 +64,6 @@ This work was supported by the Microwave Remote Sensing Laboratory of BME ([Rada
 For further information on passive radars check: [tamaspeto.com](https://tamaspeto.com)
 *Tamás Pető*
 *2017-2020, Hungary*
+
+
+
