@@ -11,6 +11,8 @@ import metricExtract as me
 #
 #  Clutter filter performance evaluation on full track from raw data
 #
+#
+# TODO: Clean up and document this testing script
 
 # Load target track file
 track = np.load("VEGAM20190729FOXC0S0FM_SurvP5_track.npy")[:,0:2].astype(dtype=int)

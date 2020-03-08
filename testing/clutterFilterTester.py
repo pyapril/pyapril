@@ -12,6 +12,8 @@ import detector
 import channelPreparation as chprep
 import numpy as np
 
+# TODO: Clean up and document this testing script
+
 iq = np.load('_raw_iq/VEGAM20190729FOXC0S0_755.npy')
 ref_ch = iq[3,:]
 surv_ch = iq [6,:]

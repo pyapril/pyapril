@@ -13,6 +13,7 @@ import metricExtract as me
 #  Script used to check the smoothness of the extracted metric array, with 
 #  increasing number of records
 #
+#  TODO: Clean up and document this testing script
 
 # Load target track file
 track = np.load("VEGAM20190729FOXC0S0FM_SurvP5_track.npy")[:,0:2].astype(dtype=int)

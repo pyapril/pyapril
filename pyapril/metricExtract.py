@@ -776,7 +776,6 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
     
     Parameters:
     -----------
-    TODO: Fill up these field
     :param iq_fname_temp: Common section of the iq file names (See imp. notes)
     :param start_ind    : Index of the first processed file
     :param stop_ind     : Index of the last processed file

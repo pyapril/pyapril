@@ -153,6 +153,6 @@ def target_DOA_estimation(rd_maps, hit_list, DOA_method, array_alignment):
 
         hit_doa = thetas[np.argmax(doa_res)]
         doa_list.append(hit_doa)
-        print("Estimating DOA for hit-> r:{:d} D:{:.2f} Az:{:.2f} ".format(hit[0], hit[1], hit_doa))
+        #print("Estimating DOA for hit-> r:{:d} D:{:.2f} Az:{:.2f} ".format(hit[0], hit[1], hit_doa))
     return doa_list
 

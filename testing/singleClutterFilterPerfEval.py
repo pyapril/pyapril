@@ -12,6 +12,7 @@ import channelPreparation as chprep
 import numpy as np
 import metricExtract as me
 
+# TODO: Clean up and document this testing script
 
 # Single-Matrix clutter filter performance evaluation test
 # Target 1 [9,410]

@@ -13,9 +13,9 @@ from numpy import linalg as LA
             - Wiener filter with Sample Matrix Inversion - Wiener_SMI     
             - Wiener filter with minimum redundance estiomation - Wiener_SSMI
             - Extensive Cancellation Algorithm ECA
-            - Batched version of the Extensive Cancellation Algorithm - ECA-B (Testing is required)
+            - Batched version of the Extensive Cancellation Algorithm - ECA-B 
             - Least Mean Squares method - LMS                                 (Only in later versions !)            
-            - Sliding window Extensive Cancellation Algorithm - ECA-S         (Testing is required)
+            - Sliding window Extensive Cancellation Algorithm - ECA-S         
             - Least Mean Square algorithm - LMS                               (Only in later versions !)
             - Normalized Least Mean Square algorithm - NLMS                   (Only in later versions !)
             - Recursive Least Squares - RLS                                   (Only in later versions !)

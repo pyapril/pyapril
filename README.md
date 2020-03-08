@@ -26,9 +26,10 @@ pip install pyapril
 * 1.3.0 Clutter filter and detection performance evaluation
 * 1.4.0 Target DoA estimation
 * 1.5.0 Surveillance channel beamforming
+* 1.6.0 Target parameter calculator
 
 ##### Acknowledgements
-This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thank of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) who helped this project becoming mature with the development and testing of the Kerberos SDR.
+This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thanks of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) who helped this project becoming mature with the development and testing of the Kerberos SDR.
 
 
 For further information on passive radars check: [tamaspeto.com](https://tamaspeto.com)

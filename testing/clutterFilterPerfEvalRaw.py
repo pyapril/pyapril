@@ -12,6 +12,8 @@ import metricExtract as me
 #  Single file clutter filter performance evaluation on raw data
 #
 
+# TODO: Clean up and document this testing script
+
 iq = np.load('_raw_iq/VEGAM20190729FOXC0S0_755.npy')
 target_rd=[9,410]
 win=[6,6,3,3]
