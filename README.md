@@ -7,12 +7,40 @@ based passive radar systems.
 ##### The package is organized as follows:
 
 * pyAPRiL: Main package directory
-	* channelPreparation: This file contains wrapper functions for the different algorithms that aims to prepare the  reference and the sureveillance signals for the detection stage. Such as reference signal regeneration and clutter cancellation techniques.
-	* clutterCancellation: It describes a huge variety of clutter cancellation techniques implemented in the space, time and the space-time domain.
-	* hitProcessor: Implements a number of hit and plot processing related functions such as the CFAR and the plot extractor.
-	* detector: In this file a number of implementation of the cross-correlation detector can be found.
-	* docs: Contains Ipython notebook files with demonstrations.
-	* test: Contains demonstration functions.
+	* **channelPreparation**: This file contains wrapper functions for the different algorithms that aims to prepare the  reference and the sureveillance signals for the detection stage. Such as reference signal regeneration and clutter cancellation techniques.
+	* **clutterCancellation** : It describes a huge variety of clutter cancellation techniques implemented in the space, time and the space-time domain. In the current version, the following algorithms are available:
+	    * Timde-domain: 
+	        * Wiener-SMI: Wiener filter with Sample Matrix Inversion
+	        * Wiener-SMI-MRE: Wiener filter with Sample Matrix Inversion and Minimum Redundancy Estimation
+	        * ECA: Extensive Cancellation Algorithm
+	        * ECA-B: Extensive Cancellation Algorithm - Batched
+	        * ECA-S: Extensive Cancellation Algorithm - Sliding
+	    * Space-domain (Beamforming):
+	        *    Max-SIR: Maximum Signal-to-Interference Ratio
+	        *    MVDR: Minimum Variance Distortionless Response
+	        *    Principal eigenvalue beaformer
+	        *    Beamstearing
+	        *    Explicit coefficient beamformer
+	* **hitProcessor**: Implements a number of hit and plot processing related functions such as the CFAR and the plot extractor. Implemented algorithms:
+	    * CA-CFAR
+	    *  Target DoA estimator (from multichannel RD matrix using the pyArgus library)
+	* **detector** : In this file a number of implementation of the cross-correlation detector can be found.
+	    * Cross-correlation detector - Time domain implementation
+	    * Cross-correlation detector - Frequency domain implementation
+	    * Cross-correlation detector - Overlap and save implementation
+	* **metricExtract**: Implements various clutter cancellation and detection performance evaluation function. The supported metrics are the followings:
+	    * CA: Clutter Attenuation
+	    * Rnf: Noise floor reduction
+	    * Mu : Peak-to-channel power ratio
+	    * Delta: Estimated target SINR
+	    * Alpha: Target peak to noise floor ratio
+	    * L: Target peak power loss
+	    * Rzdc: Zero Doppler clutter reduction
+	    * P: Peak clutter reduction
+	    * D: Dynamic range compression
+	* **targetParameterCalculator**: Calculates the expected parameters of an observed target (bistatic range, Doppler, ...) from geodetic data.
+	* **docs**: Contains Ipython notebook files with demonstrations. (Currently not available)
+	* **testing**: Contains demonstration functions.
 
 ##### Installing from Python Package Index:
 ```python
@@ -35,6 +63,3 @@ This work was supported by the Microwave Remote Sensing Laboratory of BME ([Rada
 For further information on passive radars check: [tamaspeto.com](https://tamaspeto.com)
 *Tamás Pető*
 *2017-2020, Hungary*
-
-
-
