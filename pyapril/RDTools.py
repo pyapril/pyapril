@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+import plotly.graph_objects as go
+
 def export_rd_matrix_img(fname, rd_matrix, max_Doppler, 
                          ref_point_range_index=0, 
                          ref_point_Doppler_index=0, 
@@ -150,3 +152,124 @@ def export_rd_matrix_img(fname, rd_matrix, max_Doppler,
     rd_fig.savefig(fname, dpi=dpi)
     plt.close()
     
+def plot_rd_matrix(rd_matrix,  
+                   dyn_range=None,
+                   interpolation='best', 
+                   cmap='jet', **kwargs):
+    """
+        Description:
+        ------------
+        This function creates a plotly figure object from a given range-Doppler matrix.
+        The axis of the generated figure object is scaled both in terms of bistatic range
+        and Doppler frequency.
+        The Doppler ticks are automatically generated, but the caller should specifiy
+        the maximum Doppler frequency in [Hz] through kwargs.
+        In case the user specifies the sampling frequency of the processed signal as well (fs)
+        (through kwagrs) the time delay axis of the figure object will be scaled bistatic range.
+            
+        In case the dynamic range paramter is not specified the function will automatically
+        estimate the usefull dynamic range of the range-Doppler matrix.
+        
+        Parameters:
+        -----------
+        :param: rd_matrix              : range-Doppler matrix to be exported        
+        :param: dyn_range              : (default: None - Dynamic range will be automatically calculated)
+        :param: interpolation          : (default: 'sinc')
+        :param: cmap                   : Colormap (default: 'jet')
+            
+        :type: rd_matrix              : R x D complex numpy array
+        :type: max_Doppler            : int
+        :type: dyn_range              : float
+        :type: interpolation          : string - Plotly hetamp smooth mode 'fast'/'best'/'False' (default='best')
+        :type: cmap                   : string - Plotly colormap e.g.:'jet' 
+        
+         **kwargs
+        Additional display option can be specified throught the **kwargs interface
+        Valid keys are the followings:
+        
+        :key:               max_Doppler: Maximum Doppler frequency in the range-Doppler matrix
+        :key:                        fs: sampling frequency of the processed signal   
+        :type:              max_Doppler: float
+        :type:                       fs: float
+        
+        
+        Return values:
+        --------------
+        :return: fig: Generated range-Doppler matrix figure
+        :rtype:  fig: Plotly compatibile Figure object
+    
+    """    
+        
+    """
+    --------------------------------
+               Parameters
+    --------------------------------
+    """
+        
+    fs          = kwargs.get('fs')
+    max_Doppler = kwargs.get('max_Doppler')    
+    
+    # -> For dynamic range estimation
+    range_cell_index = 20
+    doppler_cell_index= 10 
+    window_length=5
+    window_width=5
+    
+    """
+    --------------------------------
+        Dynamic range compression
+    --------------------------------
+    """
+    if dyn_range is None:
+        # Noise floor estimation
+        noise_floor = 0  # Cumulative sum of the environment power
+        cell_counter = 0
+        
+        rd_matrix /= np.max(np.abs(rd_matrix))
+        
+        for wi in np.arange(-window_length, window_length + 1):
+            for wj in np.arange(-window_width, window_width + 1):
+                cell_counter += 1
+                noise_floor += np.abs(rd_matrix[doppler_cell_index + wj, range_cell_index + wi]) ** 2
+        
+        noise_floor /= cell_counter  # Normalize for average calc
+        dyn_range = -10*np.log10(noise_floor)
+
+    
+    rd_matrix = 10 * np.log10(np.abs(rd_matrix) ** 2)
+    rd_matrix -= np.max(rd_matrix)
+
+    for i in range(np.shape(rd_matrix)[0]):  # Remove extreme low values
+        for j in range(np.shape(rd_matrix)[1]):
+            if rd_matrix[i, j] < -dyn_range:
+                rd_matrix[i, j] = -dyn_range
+                
+    """
+    --------------------------------
+            Generate Figure
+    --------------------------------
+    """
+    
+    # Prepare scales
+    bistat_range_scale = np.arange(np.size(rd_matrix,1), dtype=float)
+    doppler_scale      = np.arange(np.size(rd_matrix,0), dtype=float)
+    x_axis_title = "Bistatic range [bin]"
+    y_axis_title = "Doppler frequency [bin]"
+    if fs is not None:
+        bistat_range_scale *= (3*10**8/fs)/10**3
+        x_axis_title = "Bistatic range [km]"
+    if max_Doppler is not None:
+        doppler_scale = np.linspace(-max_Doppler,max_Doppler, np.size(rd_matrix,0))
+        y_axis_title = "Doppler frequency [Hz]"
+    # Prepare figure object
+    fig = go.Figure()       
+    fig.add_trace(go.Heatmap(x=bistat_range_scale,
+                             y=doppler_scale,
+                             z=rd_matrix,
+                             colorscale=cmap,
+                             zsmooth = interpolation))
+    fig.update_xaxes(title_text=x_axis_title)
+    fig.update_yaxes(title_text=y_axis_title)  
+    
+    
+    return fig
