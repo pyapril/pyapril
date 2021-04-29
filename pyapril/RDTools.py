@@ -273,3 +273,185 @@ def plot_rd_matrix(rd_matrix,
     
     
     return fig
+
+def plot_Doppler_slice(rd_matrix, bistat_range, **kwargs):
+    """
+        Description:
+        ------------
+        Displays the requested range slice of a given range-Doppler map.
+        In case the sampling frequency is specified through the kwargs parameter ('fs')
+        the requested range parameter is interpreted as bistatic range in [m], otherwise
+        it is interpreted as [bin]
+        
+        When a Plotly combatible figure object is passed through the 'fig' keyword,
+        the function will plot the extracted slice onto this figure, thus enabling
+        multiple slices to plot on the same figure object.
+        
+        
+        Parameters:
+        -----------
+        :param: rd_matrix              : range-Doppler matrix to be exported        
+        :param: bistat_range           : range index, either [bin] or [m]
+            
+        :type: rd_matrix              : R x D complex numpy array
+        :type: bistat_range           : float
+        
+         **kwargs
+        Additional display option can be specified throught the **kwargs interface
+        Valid keys are the followings:
+        
+        
+        :key:           fs: sampling frequency of the processed signal 
+        :key:  max_Doppler: Maximum Doppler frequency
+        :key:          fig: Figure objet to plot on
+
+        :type:          fs: float
+        :type: max_Doppler: float
+        :type:         fig: Plotly figure object
+       
+        
+        Return values:
+        --------------
+        :return: fig: Generated Doppler slice figure
+        :rtype:  fig: Plotly compatibile Figure object
+    
+    """    
+        
+    """
+    --------------------------------
+               Parameters
+    --------------------------------
+    """
+        
+    fs          = kwargs.get('fs')     
+    max_Doppler = kwargs.get('max_Doppler')    
+    fig         = kwargs.get('fig')
+    rd_matrix = 10 * np.log10(np.abs(rd_matrix) ** 2)    
+
+                
+    """
+    --------------------------------
+            Generate Figure
+    --------------------------------
+    """    
+    if bistat_range < 0:
+        print("ERROR: Bistatic range should be a positive number{:.1f}".format(bistat_range))
+        return None
+
+    if fs is not None:
+        d =  3*10**8/fs
+        if bistat_range > (np.size(rd_matrix,1)-1)*d:
+            print("ERROR: Bistatic range is out of range. {:.1f} > Max bistatic range: {:.1f} m".format(bistat_range, np.size(rd_matrix,1)*d))
+            return None
+
+        bistat_range=np.argmin(abs((np.arange(np.size(rd_matrix,1))*d-bistat_range)))
+
+    if bistat_range > np.size(rd_matrix,1)-1:
+        print("ERROR: Bistatic range is out of range. {:.1f}, Range size: {:.1f} bin".format(bistat_range, np.size(rd_matrix,1)))
+        return None
+    
+    # Prepare scales
+    doppler_scale = np.arange(np.size(rd_matrix,0), dtype=float)
+    name          = "Bistatic range bin: {:d}".format(bistat_range)
+    x_axis_title = "Doppler frequency [bin]"
+    if max_Doppler is not None:
+        doppler_scale = np.linspace(-max_Doppler,max_Doppler, np.size(rd_matrix,0))
+        x_axis_title = "Doppler frequency [Hz]"
+    
+
+    # Prepare figure object
+    if fig is None:        
+        fig = go.Figure()      
+
+    fig.add_trace(go.Scatter(x=doppler_scale, y=rd_matrix[:,bistat_range], name=name))
+    fig.update_xaxes(title_text=x_axis_title)
+    fig.update_yaxes(title_text="Amplitude [dB]")
+        
+    return fig
+
+def plot_range_slice(rd_matrix, Doppler_freq, **kwargs):
+    """
+        Description:
+        ------------
+        Displays the requested range slice of a given range-Doppler map.
+        In case the Doppler resolutionis specified through the kwargs parameter ('fD_res')
+        the requested Doppler slice parameter is interpreted as Hz, otherwise
+        it is interpreted as [bin]
+        
+        When a Plotly combatible figure object is passed through the 'fig' keyword,
+        the function will plot the extracted slice onto this figure, thus enabling
+        multiple slices to plot on the same figure object.
+        
+        Parameters:
+        -----------
+        :param: rd_matrix              : range-Doppler matrix to be exported        
+        :param: Doppler_freq           : Doppler frequency index, either [bin] or [Hz]
+            
+        :type: rd_matrix              : R x D complex numpy array
+        :type: Doppler_freq           : float
+        
+         **kwargs
+        Additional display option can be specified throught the **kwargs interface
+        Valid keys are the followings:
+        
+        
+        :key:   fs: sampling frequency of the processed signal   
+        :key:  fig: Figure objet to plot on
+        :type:  fs: float
+        :type: fig: Plotly figure object
+        
+        
+        Return values:
+        --------------
+        :return: fig: Generated range slice figure
+        :rtype:  fig: Plotly compatibile Figure object
+    
+    """    
+        
+    """
+    --------------------------------
+               Parameters
+    --------------------------------
+    """
+        
+    fs          = kwargs.get('fs')
+    max_Doppler = kwargs.get('max_Doppler')    
+    fig         = kwargs.get('fig')    
+    rd_matrix = 10 * np.log10(np.abs(rd_matrix) ** 2)    
+
+    """
+    --------------------------------
+            Generate Figure
+    --------------------------------
+    """
+    if max_Doppler is not None:
+        if abs(Doppler_freq) > max_Doppler:
+            print("ERROR: Doppler frequency is out of range. {:.1f} > Max Doppler: {:.1f} Hz".format(Doppler_freq, max_Doppler))
+            return None
+
+        Doppler_scale = np.linspace(-max_Doppler,max_Doppler, np.size(rd_matrix,0))
+        Doppler_freq=np.argmin(abs((Doppler_scale-Doppler_freq)))
+    
+    if Doppler_freq > np.size(rd_matrix,0)-1:
+        print("ERROR: Doppler frequency is out of range. {:d}, Doppler size: {:d} bin".format(Doppler_freq, np.size(rd_matrix,0)))
+        return None
+
+    if Doppler_freq < 0:
+        print("ERROR: Doppler frequency is out of range. {:d}, Doppler size: {:d} bin".format(Doppler_freq, np.size(rd_matrix,0)))
+        return None
+        
+    bistat_range_scale = np.arange(np.size(rd_matrix,1), dtype=float)
+    name = "Doppler bin: {:d}".format(Doppler_freq)
+    x_axis_title = "Bistatic range [bin]"
+    if fs is not None:
+        bistat_range_scale *= (3*10**8/fs)/10**3
+        x_axis_title = "Bistatic range [km]"
+
+    # Prepare figure object
+    if fig is None:        
+        fig = go.Figure()      
+    fig.add_trace(go.Scatter(x=bistat_range_scale, y=rd_matrix[Doppler_freq,:], name=name))
+    fig.update_xaxes(title_text=x_axis_title)
+    fig.update_yaxes(title_text="Amplitude [dB]")
+        
+    return fig
