@@ -59,6 +59,9 @@ pip install pyapril
 * 1.5.0 Surveillance channel beamforming
 * 1.6.0 Target parameter calculator
 * 1.7.0 FM IoO simulator
+* 1.7.1 Extend RD Tools with Hit matrix plot
+* 1.7.2 Adaptive RD matrix scaling to improve the visibility of the plots
+* 1.7.3 Improved generality for metric extraction
 ### Acknowledgements
 This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thanks of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) who helped this project becoming mature with the development and testing of the Kerberos SDR.
 

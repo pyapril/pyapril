@@ -228,7 +228,7 @@ def extract_dynamic_range(rd_matrix, win, win_pos):
        
     Parameters:
     -----------
-    :param rd_matrix: Range-Doppler map on which the metric extraction should be performed
+    :param rd_matrix: range-Doppler map on which the metric extraction should be performed
     :param win      : Parameters of the noise power estimation window 
                       [Est. window length, Est. window width, Guard window length, Guard window width]
     :param win_pos  : range-Doppler coordinates of the noise floor 
@@ -740,9 +740,11 @@ def eval_metrics_on_track(target_rds, rd_matrices, **kwargs):
     return metric_array
     
 
-def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind, 
-                                     stop_ind, filter_method, **kwargs):
+def eval_clutter_filter_on_track_raw(iq_load_funcion, no_records,
+                                     chprep_function,
+                                     filter_method, **kwargs):
     """
+    TODO: Update description
     Description:
     ------------
       Evaluates the performance of a clutter filter algorithm directly from 
@@ -765,29 +767,50 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
         
     Implementation notes:
     ---------------------
-        IQ files are assumed to have the following naming convention.
-        <Some sepcific name>_<cpi index>.npy
-        E.g.: "PassiveRadarIQ_0.npy", ... "PassiveRadarIQ_15.npy"
+        |iq_load_function:|
         
-        The field <Some sepcific name> is expected to received thorugh the 
-        iq_fname_temp parameter.
+        The IQ samples are loaded with the use of an externally writen function
+        that the user have to specify trhrough the iq_load_function parameter.
         
-        The expected format of the raw iq data file is complex numpy array (.npy)
-    
+        This function will be called every time when the processing loop requires
+        the next CPI to load. The function have to return a multidimensional 
+        complex numpy array which contains the iq samples. As the input parameters,
+        the iq sample load function gets the time index of the currently 
+        performed processing and the kwargs argument throguh which aditional 
+        parameters can be passed.
+        
+        minimum example:
+            def iq_load(time_index, **kwargs):
+                filename_list = kwargs.get('filename_list')
+                return np.load(filename_list[time_index])
+        
+        |chprep_function:|
+        After loading the raw IQ samples the chprep function prepares the referece
+        and the surveillance signal processing channels with which the performance
+        evaluation will be performed.
+        
+        minimum example:
+            def chprep_wrapper(iq_samples, **kwargs):
+                ref_ch_index  = kwargs.get('ref_ch_index')
+                surv_ch_index = kwargs.get('surv_ch_index')
+                ref_ch  = iq_samples[ref_ch_index,:]
+                surv_ch = iq_samples[surv_ch_index,:]    
+            return ref_ch, surv_ch
+        
     Parameters:
     -----------
-    :param iq_fname_temp: Common section of the iq file names (See imp. notes)
-    :param start_ind    : Index of the first processed file
-    :param stop_ind     : Index of the last processed file
-        
-    :param filter_metod : Name of the used clutter filtering algorithm.eg: "Winer-SMI-MRE"
-                          For the list of the available clutter filtering algorithms
-                          please check the documenation of clutterCancellation module.
+    :param iq_load_funcion : A function that is called to import the raw iq samples
+    :param no_records      : Number of CPIs considered for this processing
+    :param chprep_function : A function taht is called to prepare the reference and the surveillance channel
     
-    :type iq_fname_temp : string
-    :type start_ind     : int
-    :type stop_ind      : int
-    :type filter_method : string
+    :param filter_metod    :Name of the used clutter filtering algorithm.eg: "Winer-SMI-MRE"
+                            For the list of the available clutter filtering algorithms
+                            please check the documenation of clutterCancellation module.
+    
+    :type iq_load_funcion : python function reference
+    :type no_records      : int
+    :tpye chprep_function : python function reference
+    :type filter_method   : string
                       
     
      **kwargs
@@ -818,25 +841,20 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
     :rtype metric_array: real valued numpy array
     """ 
     # kwargs processing
-    target_rds = kwargs.get('target_rds')
+    target_rds   = kwargs.get('target_rds')
     
     metric_array = []
     metric_list = []    
-    for p in np.arange(start_ind, stop_ind, 1):
-        
+    for p in np.arange(no_records):        
         metric_list = []
-        filename = iq_fname_temp+str(p)+".npy"
-        #print("Processing: {:s}".format(filename))
+        #print("Processing: {:d}".format(p))
 
-        #Load
-        # TODO: Handle channel select proplery
-        iq = np.load(filename)
-        ref_ch = iq[3,:]
-        surv_ch = iq [6,:]
+        iq = iq_load_funcion(p, **kwargs)
+        ref_ch, surv_ch = chprep_function(iq, **kwargs)
         
         if target_rds is not None:
             # Get real target coordinates
-            target_rd = target_rds[p-start_ind, :]
+            target_rd = target_rds[p, :]
             # Check validity
             if not (target_rd[0] < 0 ):                 
                 metric_list.append(p)      
@@ -862,9 +880,10 @@ def eval_clutter_filter_on_track_raw(iq_fname_temp, start_ind,
 
     return metric_array
 
-def scan_time_domain_dimension(statistic, dim_list, iq_fname_temp, start_ind,
-                               stop_ind, filter_method, **kwargs):
+def scan_time_domain_dimension(statistic, dim_list, iq_load_funcion, no_records,
+                               chprep_function, filter_method, **kwargs):
     """
+    # TODO: Updated with chprep function
     Description:
     ------------
       This function explores the performance improvement dependency of a 
@@ -881,29 +900,29 @@ def scan_time_domain_dimension(statistic, dim_list, iq_fname_temp, start_ind,
     -----------
     These input parameters are mandatory!
     
-    :param statistic     : Type of the final metric statistic 'avg' / 'max' / 'median'
-    :param dim_list      : List of the interested tap sizes eq:[2,3,4,5,6 ... , 64]
-    :param iq_fname_temp : Template name of the processed iq files
-                           (This field is required by the "eval_clutter_filter_on_track_raw" 
-                            function, check its header for more details)
-    :param start_ind     : Index of the first processed file 
-                           (This field is required by the "eval_clutter_filter_on_track_raw" 
-                            function, check its header for more details)
-    :param stop_ind      : Index of the last processed file 
-                           (This field is required by the "eval_clutter_filter_on_track_raw" 
-                            function, check its header for more details)
-
+    :param statistic       : Type of the final metric statistic 'avg' / 'max' / 'median'
+    :param dim_list        : List of the interested tap sizes eq:[2,3,4,5,6 ... , 64]
+    :param iq_load_funcion : A function that is called to import the raw iq samples
+                             (This field is required by the "eval_clutter_filter_on_track_raw" 
+                             function, check its header for more details)
+    :param no_records      : Number of CPIs considered for this processing
+                             (This field is required by the "eval_clutter_filter_on_track_raw" 
+                             function, check its header for more details)
+    :param chprep_function : A function that prepares the reference and surveillance channels
+                             (This field is required by the "eval_clutter_filter_on_track_raw" 
+                             function, check its header for more details)
+    
     :param filter_method : Name of the inspected clutter filter algorithm
                            (This field is required by the "eval_clutter_filter_on_track_raw" 
                            function, check its header for more details)
     
     
-    :type statistic      : string
-    :type dim_list       : python list
-    :type iq_fname_temp  : string
-    :type start_ind      : int
-    :type stop_ind       : int
-    :type filter_method  : string
+    :type statistic       : string
+    :type dim_list        : python list
+    :type iq_load_funcion : python function object
+    :type no_records      : int
+    :tpye chprep_funciton : python function object
+    :type filter_method   : string
     
      **kwargs
         The required metric extraction and filter parameters are received 
@@ -922,9 +941,9 @@ def scan_time_domain_dimension(statistic, dim_list, iq_fname_temp, start_ind,
     scan_res = None # Results array of the parameter scan
     for K in dim_list:
         print("Current filter dimension is {:d}".format(K))
-        metric_array = eval_clutter_filter_on_track_raw(iq_fname_temp=iq_fname_temp,
-                                                        start_ind=start_ind,
-                                                        stop_ind=stop_ind,
+        metric_array = eval_clutter_filter_on_track_raw(iq_load_funcion=iq_load_funcion,
+                                                        no_records=no_records,
+                                                        chprep_function=chprep_function,
                                                         filter_method=filter_method,
                                                         K=K, **kwargs)
         
