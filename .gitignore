@@ -1,3 +1,4 @@
 pyapril/__pycache__/*.pyc
+pyapril/sim/__pycache__/*.pyc
 testing/_raw_iq/*.npy
 .idea/
