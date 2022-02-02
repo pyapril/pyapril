@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
-#from pyapril import detector
-#from pyapril import clutterCancellation as CC
-from RDTools import export_rd_matrix_img
+import os
+import sys
 
 # Import APRiL package
-import sys
-import os
-currentPath = os.path.dirname(os.path.realpath(__file__))
-april_path = os.path.join(currentPath, "pyapril")
-sys.path.insert(0, april_path)
-import detector
-import clutterCancellation as CC
-import channelPreparation as chprep
+from pyapril.RDTools import export_rd_matrix_img
+import pyapril.detector as detector
+import pyapril.clutterCancellation as CC
+import pyapril.channelPreparation as chprep
 
 
 
@@ -37,6 +32,7 @@ import numpy as np
          - Ver 1.0.1    : Code restructuring (2019 08 03)
          - Ver 1.1.0    : Construction of various wrapper functions (2019 08 10)
          - Ver 1.2.0    : New metrics: L, Rdpi, Rzdc , P, D (2019 08 17)
+         - Ver 1.2.1    : Edge treatment for the Delta metric (2021 01 29)
  """
 
 def extract_delta(rd_matrix, target_rd, win):
@@ -80,8 +76,19 @@ def extract_delta(rd_matrix, target_rd, win):
     mask = np.ones((2 * win[1] + 1, 2 * win[0] + 1))
     mask[win[1] - win[3]:win[1] + 1 + win[3], win[0] - win[2]:win[0] + 1 + win[2]] =  np.zeros((win[3] * 2 + 1, win[2] * 2 + 1))
     cell_counter = np.sum(mask)
+    
+    # Edge treatment with mirroring
+    left_edge  =  np.fliplr(rd_matrix[:,0:win[0]])
+    right_edge =  np.fliplr(rd_matrix[:,-win[0]::])
+    rd_matrix = np.concatenate((left_edge, rd_matrix, right_edge), axis=1)
+    target_rd[0] += win[0]
+    
+    top_edge    = rd_matrix[0:win[1], :][::-1]
+    bottom_edge = rd_matrix[-win[1]:, :][::-1] 
+    rd_matrix   = np.concatenate((top_edge, rd_matrix, bottom_edge), axis=0)
+    target_rd[1] += win[1]
 
-    rd_block = rd_matrix[target_rd[1] - win[1]:target_rd[1] + win[1] + 1, target_rd[0] - win[0]:target_rd[0] + win[0] + 1]
+    rd_block = rd_matrix[target_rd[1] - win[1] : target_rd[1] + win[1] + 1, target_rd[0] - win[0] : target_rd[0] + win[0] + 1]
     try:
         rd_block = np.multiply(rd_block, mask)
     except ValueError:
