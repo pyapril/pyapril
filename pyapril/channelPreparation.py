@@ -1,6 +1,6 @@
 # - coding: utf-8 -*-
 import numpy as np
-import clutterCancellation as CC
+from pyapril import clutterCancellation as CC
 try:
     from pyargus import beamform as bf         
     has_pyargus = True
