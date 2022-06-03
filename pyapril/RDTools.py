@@ -550,7 +550,7 @@ def plot_hit_matrix(hit_matrix, **kwargs):
     
     return fig
 
-def plot_target_box(fig, target_rd, box_size, color='red', annotation=None):
+def plot_target_box(fig, target_rd, box_size, color='red', annotation=None, annotation_position=[0,0]):
     """
     This function can be used to highlight a target in the range-Doppler 
     map with a colored box.
@@ -581,8 +581,8 @@ def plot_target_box(fig, target_rd, box_size, color='red', annotation=None):
         # Another style to add annotation
         
         fig.add_trace(go.Scatter(
-            x=[target_rd[0]+box_size[0]],
-            y=[target_rd[1]+box_size[1]],
+            x=[target_rd[0]+box_size[0]+annotation_position[0]],
+            y=[target_rd[1]+box_size[1]+annotation_position[1]],
             showlegend=False,
             mode="text",        
             text=[annotation,],
