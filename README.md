@@ -48,6 +48,7 @@ This projects strictly focuses on the support of scientific researches. The sour
 	    * P: Peak clutter reduction
 	    * D: Dynamic range compression
 	* **targetParameterCalculator**: Calculates the expected parameters of an observed target (bistatic range, Doppler, ...) from geodetic data.
+	* **targetLocalization**: Calculates the location of the target
 	* **RDTools**: range-Doppler matrix image export and plotting tools
 	* **sim**: IoO simulator (FM)
 	* **docs**: Contains Ipython notebook files with demonstrations.
@@ -72,6 +73,7 @@ pip install pyapril
 * 1.7.3 Improved generality for metric extraction
 * 1.7.4 Improve and fix metric extraction
 * 1.7.5 Update project organization (2023 04)
+* 1.7.6 Target localization
 ### Acknowledgements
 This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thanks of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) and to the KrakenRF (https://www.krakenrf.com/) who helped this project becoming mature with the development and testing the algorithms using Kerberos SDR (later KrakenSDR).
 
