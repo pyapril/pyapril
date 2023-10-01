@@ -2,8 +2,15 @@
 
 # Advanced   Passive   Radar     Library
 
-pyAPRiL is a python based signal processing library which implements passive radar signal processing algorithms. All the algorithms are tested and verified through real field measurement data and simulations. The corresponding references are highlited where applicable. Algorithms are researched and developed on real life DVB-T and FM
-based passive radar systems.
+pyAPRiL is a python based DSP library which implements passive radar algorithms. The ultimate goal of the library is to make available the so far ellaborated passive radar algorithms to everyone including sceintific researchers, radar system designers and amateurs. All the implemented methods are tested and verified through real-life systems, field measurements and simulations.
+
+### Project guidelines:
+- This project respects the authors of all the contributions, therfore references are always highlighted where applicable.
+- Understanding the operation of the implemented algorithms is always of primary importance. The efficient execution and concise coding do not belong to the principles of the project, but encoured  when it is not at the expense of comprehensibility and does not change the essential operation of the originally proposed algorithm.
+### Contributions:
+Contributions are welcome from anyone who shares the passion of passive radars and wants to help make opensource passive radar community even better. Whether you're a seasoned developer or just getting started, there are plenty of ways to get involved and contribute to pyAPRiL. By contributing to the project, you'll be helping to make a positive impact on passive radar developers around the globe and advancing the deeper sceintific understanding of this novel technology. Whether you can contribute code, documentation, or simply provide feedback, every contribution helps us move closer to our shared goal.
+### Restrictions:
+This projects strictly focuses on the support of scientific researches. The source code of the library is licensed under the GNU General Public License version 3 (GPLv3), which is a copyleft license. This means that anyone who uses, modifies, or distributes the project must also license their work under the same terms and conditions. Commercial use of this software is permitted, provided that any results obtained from such use are made available to the public under the same license. By adhering to these restrictions, this project gains comliance with the REGULATION (EU) 2021/821 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL.
 
 ### The package is organized as follows:
 
@@ -28,7 +35,8 @@ based passive radar systems.
 	* **detector** : In this file a number of implementation of the cross-correlation detector can be found.
 	    * Cross-correlation detector - Time domain implementation
 	    * Cross-correlation detector - Frequency domain implementation
-	    * Cross-correlation detector - Overlap and save implementation
+	    * Cross-correlation detector - Batched implementation (Overlap and save)
+		* Doppler frequency windowing
 	* **metricExtract**: Implements various clutter cancellation and detection performance evaluation function. The supported metrics are the followings:
 	    * CA: Clutter Attenuation
 	    * Rnf: Noise floor reduction
@@ -42,7 +50,7 @@ based passive radar systems.
 	* **targetParameterCalculator**: Calculates the expected parameters of an observed target (bistatic range, Doppler, ...) from geodetic data.
 	* **RDTools**: range-Doppler matrix image export and plotting tools
 	* **sim**: IoO simulator (FM)
-	* **docs**: Contains Ipython notebook files with demonstrations. (Currently not available)
+	* **docs**: Contains Ipython notebook files with demonstrations.
 	* **testing**: Contains demonstration functions.
 
 ### Installing from Python Package Index:
@@ -63,13 +71,11 @@ pip install pyapril
 * 1.7.2 Adaptive RD matrix scaling to improve the visibility of the plots
 * 1.7.3 Improved generality for metric extraction
 * 1.7.4 Improve and fix metric extraction
+* 1.7.5 Update project organization (2023 04)
 ### Acknowledgements
-This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thanks of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) who helped this project becoming mature with the development and testing of the Kerberos SDR.
+This work was supported by the Microwave Remote Sensing Laboratory of BME ([Radarlab](http://radarlab.mht.bme.hu)). A special thanks of mine goes to the  RTL-SDR site ([RTL-SDR](https://www.rtl-sdr.com/)) and to the KrakenRF (https://www.krakenrf.com/) who helped this project becoming mature with the development and testing the algorithms using Kerberos SDR (later KrakenSDR).
 
-
-For further information on passive radars check: [tamaspeto.com](https://tamaspeto.com)
-*Tamás Pető*
-*2017-2022, Hungary*
+For further information on passive radars check: [passiveradar.eu](https://passiveradar.eu)
 
 
 
