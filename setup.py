@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="pyAPRiL",
-    version="1.7.5",
+    version="1.7.6",
     author="Tamas Peto",
     author_email="petotax@gmail.com",
     description="A python based passive radar library",

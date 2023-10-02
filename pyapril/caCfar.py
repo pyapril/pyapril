@@ -72,4 +72,4 @@ class CA_CFAR():
         rd_snr = rd_matrix / rd_avg_noise_power
         hit_matrix = rd_snr > self.threshold
 
-        return hit_matrix
+        return hit_matrix, rd_snr

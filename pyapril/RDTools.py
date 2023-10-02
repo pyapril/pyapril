@@ -549,3 +549,76 @@ def plot_hit_matrix(hit_matrix, **kwargs):
     fig.update_traces(showscale=False) # Disable colorbar
     
     return fig
+
+def plot_target_box(fig, target_rd, box_size, color='red', annotation=None, annotation_position=[0,0]):
+    """
+    This function can be used to highlight a target in the range-Doppler 
+    map with a colored box.
+
+    Parameters:
+    -----------
+        
+        :param: target_rd              : Range-Doppler coordinates to be highlighted
+        :param: box_size               : Target highlight box width and size (half size!) 
+          
+        :type: target_rd              : 2 element list [range index, Doppler index]
+        :type: box_size               : 2 element list [int, int]
+
+    Returns:
+    -------
+    :return: fig: RD matrix with highlighted target
+    :rtype : fig: Plotly compatible figure object
+    
+    """
+    fig.add_shape(type="rect",
+                    x0=target_rd[0]-box_size[0],
+                    x1=target_rd[0]+box_size[0],
+                    y0=target_rd[1]-box_size[1],
+                    y1=target_rd[1]+box_size[1],
+                    line=dict(color=color, width=2))
+    
+    if annotation is not None:
+        # Another style to add annotation
+        
+        fig.add_trace(go.Scatter(
+            x=[target_rd[0]+box_size[0]+annotation_position[0]],
+            y=[target_rd[1]+box_size[1]+annotation_position[1]],
+            showlegend=False,
+            mode="text",        
+            text=[annotation,],
+            textposition="top right",
+            textfont=dict(
+                #family="sans serif",
+                size=14,
+                color=color
+            )            
+        ))
+        """        
+        fig.add_annotation(
+            x=target_rd[0],
+            y=target_rd[1]+box_size[1]+15,
+            xref="x",
+            yref="y",
+            text=annotation,
+            showarrow=False,
+            font=dict(
+                #family="Courier New, monospace",
+                size=14,
+                color="red"
+                ),
+            align="center",
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=2,
+            arrowcolor="red",
+            ax=20,
+            ay=-30,
+            bordercolor="gray",
+            borderwidth=2,
+            borderpad=4,
+            bgcolor="white",
+            opacity=0.8
+            )
+        """
+    
+    return fig
