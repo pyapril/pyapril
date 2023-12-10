@@ -40,6 +40,8 @@ def solve_quadratic_eq(a,b,c):
      x2 : Solution #2
          
      """
+     if (b**2-4*a*c)<0:
+        raise Exception("ERROR: Discriminant is negative, No solutions have found!") 
      x1 = (-b + np.sqrt(b**2-4*a*c)) / (2*a)
      x2 = (-b - np.sqrt(b**2-4*a*c)) / (2*a)     
      return x1,x2
@@ -71,9 +73,8 @@ def localize_target_ms_sx(ioo_coords, rb_vec):
     """
     
     if ioo_coords.shape[0] != rb_vec.shape[0]:
-        print("ERROR: The number of bistatic range measurements and the number of IoO should match")
-        return None
-    
+        raise Exception("ERROR: The number of bistatic range measurements and the number of IoO should match")
+            
     # Calculate the S_ auxiliary matrix
     S  = ioo_coords
     S_ = np.linalg.inv(S.T @ S) @ S.T
